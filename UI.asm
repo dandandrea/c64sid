@@ -318,20 +318,15 @@ clear           lda #$93 ; "Clear screen" character
                 rts
 
 ; Start
-start           jsr initui
-                jsr initsid
+start           ; Install interrupt routine
+                jsr $2000
+
+                ; Init UI and jump to main loop
+                jsr initui
                 jmp mainloop
 
 ; Update UI subroutine
-updateui        ; Clear "busy" indicator
-                ldx #0    ; row
-                ldy #0    ; column
-                clc       ; clc = update position, sec = get position
-                jsr $fff0 ; "Position cursor" KERNAL function
-                lda #$20 ; " "
-                jsr $ffd2
-
-                ; Data text
+updateui        ; Data text
                 jsr datatext
 
                 ; Display current frequency (high bits)
@@ -385,50 +380,6 @@ updateui        ; Clear "busy" indicator
                 ; End of subroutine
                 rts
 ; End updateui subroutine
-
-; SID play routine
-play            ; UI text
-                jsr uitext
-
-                ; Set "busy" indicator
-                ldx #0    ; row
-                ldy #0    ; column
-                clc       ; clc = update position, sec = get position
-                jsr $fff0 ; "Position cursor" KERNAL function
-                lda #$2a ; "*"
-                jsr $ffd2
-
-                ; Set ADSR
-                lda attack
-                ora decay
-                sta $d405
-                lda sustain
-                ora release
-                sta $d406
-
-                ; Set frequency
-                lda freqlo
-                sta $d400
-                lda freqhi
-                sta $d401
-
-                ; Set gate bit
-                lda #%00000001
-                ora $d404
-                sta $d404
-
-                ; Busywait
-                jsr playwait
-
-                ; Clear gate bit
-                lda #%11111110
-                ora $d404
-                sta $d404                
-
-                ; Bottom of SID play routine
-                ; TODO: Convert to subroutine
-                jmp mainloop
-; End of SID play routine
 
 ; Main loop
 mainloop
@@ -513,14 +464,8 @@ rkey            lda $cb
                 ; If "E" is pressed
 ekey            lda $cb
                 cmp #$0e ; "E"
-                bne space
-                jmp decatt
-
-                ; If spacebar is pressed
-space           lda $cb
-                cmp #$3c ; " "
                 bne bottom
-                jmp play
+                jmp decatt
 
 bottom          ; Bottom of main loop
                 jmp mainloop
@@ -584,34 +529,18 @@ decsust         dec sustain
 ; Increment frequency
 ; TODO: Convert to subroutine
 incfreqh        inc freqhi
-                inc freqhi
-                inc freqhi
-                inc freqhi
-                inc freqhi
                 jsr debounce
                 jmp mainloop
 incfreql        inc freqlo
-                inc freqlo
-                inc freqlo
-                inc freqlo
-                inc freqlo
                 jsr debounce
                 jmp mainloop
 
 ; Decrease frequency
 ; TODO: Convert to subroutine
 decfreqh        dec freqhi
-                dec freqhi
-                dec freqhi
-                dec freqhi
-                dec freqhi
                 jsr debounce
                 jmp mainloop
 decfreql        dec freqlo
-                dec freqlo
-                dec freqlo
-                dec freqlo
-                dec freqlo
                 jsr debounce
                 jmp mainloop
 
@@ -633,48 +562,6 @@ decatt          dec attack
                 jsr debounce
                 jmp mainloop
 ; End of input handlers
-
-; SID initialization routine
-initsid         ; Clear SID registers
-                ldx #$00
-                lda #$00
-
-initsidl        sta $d400,x
-                inx
-                cpx #$1d ; There are 29 registers, 29 = 0x1d
-                bne initsidl
-
-                ; Set SID master volume
-                lda #%00001111
-                sta $d418
-
-                ; Set waveform
-                lda #%00100000
-                ora $d404
-                sta $d404
-
-                ; Set ADSR
-                lda attack
-                ora decay
-                sta $d405
-                lda sustain
-                ora release
-                sta $d406
-
-                ; Set frequency
-                lda freqlo
-                sta $d400
-                lda freqhi
-                sta $d401
-
-                ; Clear gate bit
-                lda #%11111110
-                ora $d404
-                sta $d404                
-
-                ; End of routine
-                rts
-; End of SID initialization routine
 
 ; Busywait routine
 busywait        lda #$00
@@ -708,28 +595,6 @@ debounce        lda dbols
                 sta inloops
                 jsr busywait
                 rts
-
-; Play note busywait
-playwait        lda playols
-                sta outloops
-                lda playils
-                sta inloops
-                jsr busywait
-                rts
-
-; Initial frequency
-freqlo          byte $00
-freqhi          byte $24
-
-; Initial ADSR values
-attack          byte $a0
-decay           byte $00
-sustain         byte $80
-release         byte $04
-
-; Play duration
-playols         byte $ff
-playils         byte $ff
 
 ; Debounce duration
 dbols           byte $40
@@ -776,6 +641,7 @@ six             EOR #$20
                 BPL one
                 RTS
 
+; Used by above subroutine
 outa            byte 128,160,200
 outb            byte 1
 outc            byte 1
