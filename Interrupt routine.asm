@@ -2,17 +2,9 @@
                 *=$2000
 
 ; Initialize SID
-begin            jsr initsid
+begin           jsr initsid
 
 ; Load new interrupt routine
-check           ; Don't install twice
-                lda origlo
-                cmp #$00
-                beq install
-
-                ; Already installed
-                rts
-
 install         ; Disable interrupts
                 sei
 
@@ -51,6 +43,10 @@ install         ; Disable interrupts
                 rts
 ; New interrupt routine loaded
 
+trintirq        byte 12   ; Interval between clearing gate bit and then setting it
+trlenirq        byte 48   ; Interval between setting gate bit and then clearing it
+numint          byte $00
+
 ; Our interrupt routine
 main            ; Acknowledge IRQ
                 dec $d019
@@ -62,15 +58,20 @@ main            ; Acknowledge IRQ
                 tya
                 pha ; y
 
-                ; 60th call?
+                ; nth interrupt?
                 lda counter
-                cmp #60
-                bne notsixty
+                cmp numint
+                bne notn
 
                 ; Yes
-                jsr sixty
+                jsr isn
                 
-notsixty        ; Increment the counter
+                ; Reset counter
+                ; TODO: Reset to $ff so that increment below sets it to $00
+                lda #$00
+                sta counter
+
+notn            ; Increment the counter
                 inc counter
 
                 ; Restore register values
@@ -84,52 +85,46 @@ notsixty        ; Increment the counter
                 jmp (origlo) ; Now call the original interrupt routine
 ; End of our interrupt routine
 
-; Every-60-seconds routine
-sixty           ; Display output
+; Every n-interrupts routine
+isn             ; Display output
                 lda gateset
-                cmp #00
-                bne noton
+                cmp #0
+                beq noton ; If gate bit is zero then not playing
 
-                ; Display indicator
-                lda #3 ; Cyan text
-                sta $0286
-                lda #$2a
+                ; In an interval
+
+                ; Clear indicator
+                lda #$20  ; " "
                 sta $0400
+
+                ; Load interrupt counter
+                lda trlenirq
+                sta numint
+
+                ; Done here
                 jmp inddone
 
-noton           ; Clear indicator
-                lda #$20
+noton           ; Not in an interval
+
+                ; Update indicator
+                lda #3    ; Cyan text
+                sta $0286
+                lda #$2a  ; "*"
                 sta $0400
+
+                ; Load interrupt counter
+                lda trintirq
+                sta numint
 
                 ; Play SID
 inddone         jsr playsid
-
-                ; Increment output
-                inc output
-
-                ; Reset counter
-                lda #0
-                sta counter
-
-                ; Roll output if it reaches its max value
-                lda output
-                cmp maxout
-                beq resetout
-                jmp noreset
-
-resetout        lda minout
-                sta output
 
 noreset         ; Done
                 rts
 ; End of every-60-seconds routine
 
-origlo          byte $00
-orighi          byte $00
 counter         byte $00
 output          byte $30
-minout          byte $30
-maxout          byte $3a
 
 ; SID play routine
 playsid         ; Set ADSR
@@ -166,7 +161,7 @@ setgate         ; Set gate bit
 
 clrgate         ; Clear gate bit
                 lda #%11111110
-                ora $d404
+                and $d404
                 sta $d404                
 
                 ; Toggle gate bit variable
@@ -220,3 +215,23 @@ initsidl        sta $d400,x
                 ; End of routine
                 rts
 ; End of SID initialization routine
+
+divisor         byte $00
+dividend        byte $00
+remainder       byte $00
+
+; 8 bit, unsigned binary division
+; Quotient in dividend
+; Remainder in accumulator
+; Lifted from http://6502org.wikidot.com/software-math-intdiv
+divide          LDA #0
+                LDX #8
+                ASL dividend
+L1              ROL
+                CMP divisor
+                BCC L2
+                SBC divisor
+L2              ROL dividend
+                DEX
+                BNE L1
+                RTS

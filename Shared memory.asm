@@ -6,7 +6,11 @@ freqlo          byte $00
 freqhi          byte $24
 
 ; ADSR values
-attack          byte $a0
-decay           byte $00
-sustain         byte $80
-release         byte $04
+attack          byte 3
+decay           byte 3
+sustain         byte $aa
+release         byte 4
+
+; Pointer to original interrupt routine
+origlo          byte $00
+orighi          byte $00

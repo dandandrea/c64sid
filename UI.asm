@@ -1,3 +1,5 @@
+; TODO: Control of tempo, waveform, pulse duty-cycle, etc
+
 ; Program starts at $1000 (SYS 4096)
                 *=$1000
 
@@ -388,8 +390,13 @@ mainloop
                 cmp #$7f
                 bne nobreak
 
-break           ; Reset screen and end program
+break           ; Restore original interrupt routine
+                jsr $3000
+
+                ; Reset screen and end program
                 jsr resetui
+
+                ; Done
                 rts
 
 nobreak         ; Update UI
