@@ -22,14 +22,25 @@
         <PostBuildCommands />
     </BuildEvents>
     <BuildList>
-        <FileName>UI.asm</FileName>
-        <FileName>Shared memory.asm</FileName>
+        <FileName>A UI.asm</FileName>
         <FileName>Interrupt routine.asm</FileName>
+        <FileName>Shared memory.asm</FileName>
         <FileName>Uninstall.asm</FileName>
     </BuildList>
-    <DetermineBuildOrder>0</DetermineBuildOrder>
+    <DetermineBuildOrder>1</DetermineBuildOrder>
     <PaddingByte>0</PaddingByte>
     <SourceFiles>
+        <SourceFile>
+            <Name>A UI.asm</Name>
+            <PrgName />
+            <FileType>2</FileType>
+            <IncludeInBuild>True</IncludeInBuild>
+            <Regions />
+            <Breakpoints />
+            <Bookmarks />
+            <Topmost>True</Topmost>
+            <FileOpen>True</FileOpen>
+        </SourceFile>
         <SourceFile>
             <Name>Chars.cst</Name>
             <PrgName />
@@ -73,17 +84,6 @@
             <Bookmarks />
             <Topmost>False</Topmost>
             <FileOpen>False</FileOpen>
-        </SourceFile>
-        <SourceFile>
-            <Name>UI.asm</Name>
-            <PrgName />
-            <FileType>2</FileType>
-            <IncludeInBuild>True</IncludeInBuild>
-            <Regions />
-            <Breakpoints />
-            <Bookmarks />
-            <Topmost>True</Topmost>
-            <FileOpen>True</FileOpen>
         </SourceFile>
         <SourceFile>
             <Name>Uninstall.asm</Name>

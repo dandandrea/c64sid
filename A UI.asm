@@ -321,7 +321,7 @@ clear           lda #$93 ; "Clear screen" character
 
 ; Start
 start           ; Install interrupt routine
-                jsr $2000
+                jsr install$
 
                 ; Init UI and jump to main loop
                 jsr initui
@@ -336,7 +336,7 @@ updateui        ; Data text
                 ldy #5    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
-                lda freqhi
+                lda freqhi$
                 jsr outdecim
 
                 ; Display current frequency (low bits)
@@ -344,7 +344,7 @@ updateui        ; Data text
                 ldy #5    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
-                lda freqlo
+                lda freqlo$
                 jsr outdecim
 
                 ; Display current "attack" value
@@ -352,7 +352,7 @@ updateui        ; Data text
                 ldy #5    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
-                lda attack
+                lda attack$
                 jsr outdecim
 
                 ; Display current "decay" value
@@ -360,7 +360,7 @@ updateui        ; Data text
                 ldy #5    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
-                lda decay
+                lda decay$
                 jsr outdecim
 
                 ; Display current "sustain" value
@@ -368,7 +368,7 @@ updateui        ; Data text
                 ldy #5    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
-                lda sustain
+                lda sustain$
                 jsr outdecim
 
                 ; Display current "release" value
@@ -376,7 +376,7 @@ updateui        ; Data text
                 ldy #5    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
-                lda release
+                lda release$
                 jsr outdecim
 
                 ; End of subroutine
@@ -391,7 +391,7 @@ mainloop
                 bne nobreak
 
 break           ; Restore original interrupt routine
-                jsr $3000
+                jsr uninstall$
 
                 ; Reset screen and end program
                 jsr resetui
@@ -480,92 +480,92 @@ bottom          ; Bottom of main loop
 
 ; Input handlers
 ; Increase release
-increl          inc release
-                inc release
-                inc release
-                inc release
-                inc release
+increl          inc release$
+                inc release$
+                inc release$
+                inc release$
+                inc release$
                 jsr debounce
                 jmp mainloop
 
 ; Decrease release
-decrel          dec release
-                dec release
-                dec release
-                dec release
-                dec release
+decrel          dec release$
+                dec release$
+                dec release$
+                dec release$
+                dec release$
                 jsr debounce
                 jmp mainloop
 
 ; Increase decay
-incdecay        inc decay
-                inc decay
-                inc decay
-                inc decay
-                inc decay
+incdecay        inc decay$
+                inc decay$
+                inc decay$
+                inc decay$
+                inc decay$
                 jsr debounce
                 jmp mainloop
 
 ; Decrease decay
-decdecay        dec decay
-                dec decay
-                dec decay
-                dec decay
-                dec decay
+decdecay        dec decay$
+                dec decay$
+                dec decay$
+                dec decay$
+                dec decay$
                 jsr debounce
                 jmp mainloop
 
 ; Increase sustain
-incsust         inc sustain
-                inc sustain
-                inc sustain
-                inc sustain
-                inc sustain
+incsust         inc sustain$
+                inc sustain$
+                inc sustain$
+                inc sustain$
+                inc sustain$
                 jsr debounce
                 jmp mainloop
 
 ; Decrease sustain
-decsust         dec sustain
-                dec sustain
-                dec sustain
-                dec sustain
-                dec sustain
+decsust         dec sustain$
+                dec sustain$
+                dec sustain$
+                dec sustain$
+                dec sustain$
                 jsr debounce
                 jmp mainloop
 
 ; Increment frequency
 ; TODO: Convert to subroutine
-incfreqh        inc freqhi
+incfreqh        inc freqhi$
                 jsr debounce
                 jmp mainloop
-incfreql        inc freqlo
+incfreql        inc freqlo$
                 jsr debounce
                 jmp mainloop
 
 ; Decrease frequency
 ; TODO: Convert to subroutine
-decfreqh        dec freqhi
+decfreqh        dec freqhi$
                 jsr debounce
                 jmp mainloop
-decfreql        dec freqlo
+decfreql        dec freqlo$
                 jsr debounce
                 jmp mainloop
 
 ; Increase attack
-incatt          inc attack
-                inc attack
-                inc attack
-                inc attack
-                inc attack
+incatt          inc attack$
+                inc attack$
+                inc attack$
+                inc attack$
+                inc attack$
                 jsr debounce
                 jmp mainloop
 
 ; Decrease attack
-decatt          dec attack
-                dec attack
-                dec attack
-                dec attack
-                dec attack
+decatt          dec attack$
+                dec attack$
+                dec attack$
+                dec attack$
+                dec attack$
                 jsr debounce
                 jmp mainloop
 ; End of input handlers

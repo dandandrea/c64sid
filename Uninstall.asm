@@ -1,7 +1,4 @@
-; Program starts at $3000
-                *=$3000
-
-                ; Disable interrupts
+uninstall$      ; Disable interrupts
                 sei
 
                 ; Further protection against interrupts firing
@@ -16,15 +13,15 @@
                 sta $d01a
 
                 ; Point the machine to the original interrupt routine
-                lda origlo
+                lda origlo$
                 sta $0314
-                lda orighi
+                lda orighi$
                 sta $0315
 
                 ; Clear pointer to original interrupt routine
                 lda #$00
-                sta origlo
-                sta orighi
+                sta origlo$
+                sta orighi$
 
                 ; ACK CIA and VIC interrupts
                 lda $dc0d

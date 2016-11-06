@@ -1,29 +1,26 @@
-; Program starts at $2000 (SYS 8192)
-                *=$2000
-
-; Initialize SID
-begin           jsr initsid
+install$         ; Initialize SID
+                jsr initsid
 
 ; Load new interrupt routine
-install         ; Disable interrupts
+                ; Disable interrupts
                 sei
 
                 ; Further protection against interrupts firing
-                lda #$7f
-                sta $dc0d
-                sta $dd0d
-                lda $dc0d
-                lda $dd0d
+                ; lda #$7f
+                ; sta $dc0d
+                ; sta $dd0d
+                ; lda $dc0d
+                ; lda $dd0d
 
                 ; Enable raster interrupts
-                lda #$01
-                sta $d01a
+                ; lda #$01
+                ; sta $d01a
 
                 ; Make copy of original interrupt routine's address
                 lda $0314
-                sta origlo
+                sta origlo$
                 lda $0315
-                sta orighi
+                sta orighi$
 
                 ; Point the machine to our new interrupt routine
                 lda #<main
@@ -32,9 +29,9 @@ install         ; Disable interrupts
                 sta $0315
 
                 ; ACK CIA and VIC interrupts
-                lda $dc0d
-                lda $dd0d
-                asl $d019
+                ; lda $dc0d
+                ; lda $dd0d
+                ; asl $d019
 
                 ; Enable interrupts
                 cli
@@ -82,7 +79,7 @@ notn            ; Increment the counter
                 pla ; a
 
                 ; Done, now call original interrupt routine
-                jmp (origlo) ; Now call the original interrupt routine
+                jmp (origlo$) ; Now call the original interrupt routine
 ; End of our interrupt routine
 
 ; Every n-interrupts routine
@@ -128,17 +125,17 @@ output          byte $30
 
 ; SID play routine
 playsid         ; Set ADSR
-                lda attack
-                ora decay
+                lda attack$
+                ora decay$
                 sta $d405
-                lda sustain
-                ora release
+                lda sustain$
+                ora release$
                 sta $d406
 
                 ; Set frequency
-                lda freqlo
+                lda freqlo$
                 sta $d400
-                lda freqhi
+                lda freqhi$
                 sta $d401
 
                 ; Alternate gate bit
@@ -194,17 +191,17 @@ initsidl        sta $d400,x
                 sta $d404
 
                 ; Set ADSR
-                lda attack
-                ora decay
+                lda attack$
+                ora decay$
                 sta $d405
-                lda sustain
-                ora release
+                lda sustain$
+                ora release$
                 sta $d406
 
                 ; Set frequency
-                lda freqlo
+                lda freqlo$
                 sta $d400
-                lda freqhi
+                lda freqhi$
                 sta $d401
 
                 ; Clear gate bit
