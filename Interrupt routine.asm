@@ -40,8 +40,8 @@ install$         ; Initialize SID
                 rts
 ; New interrupt routine loaded
 
-trintirq        byte 12   ; Interval between clearing gate bit and then setting it
-trlenirq        byte 48   ; Interval between setting gate bit and then clearing it
+trintirq        byte 12  ; Interval between clearing gate bit and then setting it
+trlenirq        byte 96  ; Interval between setting gate bit and then clearing it
 numint          byte $00
 
 ; Our interrupt routine
@@ -124,19 +124,31 @@ counter         byte $00
 output          byte $30
 
 ; SID play routine
-playsid         ; Set ADSR
-                lda attack$
-                ora decay$
-                sta $d405
-                lda sustain$
-                ora release$
-                sta $d406
-
-                ; Set frequency
+playsid         ; Set frequency
                 lda freqlo$
                 sta $d400
                 lda freqhi$
                 sta $d401
+
+                ; Set ADSR
+                lda attack$
+                asl
+                asl
+                asl
+                asl
+                ora decay$
+                sta $d405
+                lda sustain$
+                asl
+                asl
+                asl
+                asl
+                ora release$
+                sta $d406
+                
+                ; Set waveform
+                lda #%00010000 ; Triangle wave
+                sta $d404
 
                 ; Alternate gate bit
                 lda gateset
@@ -185,50 +197,11 @@ initsidl        sta $d400,x
                 lda #%00001111
                 sta $d418
 
-                ; Set waveform
-                lda #%00100000
-                ora $d404
-                sta $d404
-
-                ; Set ADSR
-                lda attack$
-                ora decay$
-                sta $d405
-                lda sustain$
-                ora release$
-                sta $d406
-
-                ; Set frequency
-                lda freqlo$
-                sta $d400
-                lda freqhi$
-                sta $d401
-
                 ; Clear gate bit
                 lda #%11111110
-                ora $d404
+                and $d404
                 sta $d404                
 
                 ; End of routine
                 rts
 ; End of SID initialization routine
-
-divisor         byte $00
-dividend        byte $00
-remainder       byte $00
-
-; 8 bit, unsigned binary division
-; Quotient in dividend
-; Remainder in accumulator
-; Lifted from http://6502org.wikidot.com/software-math-intdiv
-divide          LDA #0
-                LDX #8
-                ASL dividend
-L1              ROL
-                CMP divisor
-                BCC L2
-                SBC divisor
-L2              ROL dividend
-                DEX
-                BNE L1
-                RTS

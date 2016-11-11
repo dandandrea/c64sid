@@ -1,4 +1,6 @@
-; TODO: Control of tempo, waveform, pulse duty-cycle, etc
+; TODO: Control of tempo, waveform, pulse modulation, etc
+
+NUMOUT = $bdcd
 
 ; Program starts at $1000 (SYS 4096)
                 *=$1000
@@ -54,6 +56,8 @@ initui          ; Clear the screen
                 jsr $ffd2
                 lda #$54  ; "T"
                 jsr $ffd2
+                lda #$4f  ; "O"
+                jsr $ffd2
                 lda #$52  ; "R"
                 jsr $ffd2
                 lda #$20  ; " "
@@ -90,6 +94,8 @@ initui          ; Clear the screen
                 jsr $ffd2
                 lda #$2d  ; "-"
                 jsr $ffd2
+                lda #$2d  ; "-"
+                jsr $ffd2
                 lda #$20  ; " "
                 jsr $ffd2
                 lda #$2d  ; "-"
@@ -99,9 +105,9 @@ initui          ; Clear the screen
                 lda #$2d  ; "-"
                 jsr $ffd2
 
-                ; Output frequency (high) +/- keys
+                ; Output frequency +/- keys
                 ldx #4    ; row
-                ldy #9    ; column
+                ldy #10   ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda #$57  ; "W"
@@ -111,21 +117,9 @@ initui          ; Clear the screen
                 lda #$51  ; "Q"
                 jsr $ffd2
 
-                ; Output frequency (low) +/- keys
-                ldx #5    ; row
-                ldy #9    ; column
-                clc       ; clc = update position, sec = get position
-                jsr $fff0 ; "Position cursor" KERNAL function
-                lda #$53  ; "S"
-                jsr $ffd2
-                lda #$2f  ; "/"
-                jsr $ffd2
-                lda #$41  ; "A"
-                jsr $ffd2
-
                 ; Output attack +/- keys
-                ldx #7    ; row
-                ldy #9    ; column
+                ldx #6    ; row
+                ldy #10    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda #$52  ; "R"
@@ -136,8 +130,8 @@ initui          ; Clear the screen
                 jsr $ffd2
 
                 ; Output decay +/- keys
-                ldx #8    ; row
-                ldy #9    ; column
+                ldx #7    ; row
+                ldy #10    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda #$59  ; "Y"
@@ -148,8 +142,8 @@ initui          ; Clear the screen
                 jsr $ffd2
 
                 ; Output sustain +/- keys
-                ldx #9    ; row
-                ldy #9    ; column
+                ldx #8    ; row
+                ldy #10    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda #$46  ; "F"
@@ -160,8 +154,8 @@ initui          ; Clear the screen
                 jsr $ffd2
 
                 ; Output release +/- keys
-                ldx #10   ; row
-                ldy #9    ; column
+                ldx #9    ; row
+                ldy #10    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda #$48  ; "H"
@@ -171,7 +165,7 @@ initui          ; Clear the screen
                 lda #$47  ; "G"
                 jsr $ffd2
 
-                ; Output frequency (high) legend
+                ; Output frequency legend
                 ldx #4    ; row
                 ldy #0    ; column
                 clc       ; clc = update position, sec = get position
@@ -180,27 +174,13 @@ initui          ; Clear the screen
                 jsr $ffd2
                 lda #$52  ; "R"
                 jsr $ffd2
-                lda #$51  ; "Q"
+                lda #$45  ; "E"
                 jsr $ffd2
-                lda #$48  ; "H"
-                jsr $ffd2
-
-                ; Output frequency (low) legend
-                ldx #5    ; row
-                ldy #0    ; column
-                clc       ; clc = update position, sec = get position
-                jsr $fff0 ; "Position cursor" KERNAL function
-                lda #$46  ; "F"
-                jsr $ffd2
-                lda #$52  ; "R"
-                jsr $ffd2
-                lda #$51  ; "Q"
-                jsr $ffd2
-                lda #$4c  ; "L"
+                lda #$51  ; "H"
                 jsr $ffd2
 
                 ; Output attack legend
-                ldx #7    ; row
+                ldx #6    ; row
                 ldy #0    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
@@ -214,7 +194,7 @@ initui          ; Clear the screen
                 jsr $ffd2
 
                 ; Output decay legend
-                ldx #8    ; row
+                ldx #7    ; row
                 ldy #0    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
@@ -228,7 +208,7 @@ initui          ; Clear the screen
                 jsr $ffd2
 
                 ; Output sustain legend
-                ldx #9    ; row
+                ldx #8    ; row
                 ldy #0    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
@@ -242,7 +222,7 @@ initui          ; Clear the screen
                 jsr $ffd2
 
                 ; Output release legend
-                ldx #10   ; row
+                ldx #9    ; row
                 ldy #0    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
@@ -300,6 +280,9 @@ initui          ; Clear the screen
                 lda #$4d  ; "M"
                 jsr $ffd2
 
+                ; Update UI
+                jsr updateui
+
                 ; End of subroutine
                 rts
 ; End of "initui" subroutine
@@ -331,49 +314,56 @@ start           ; Install interrupt routine
 updateui        ; Data text
                 jsr datatext
 
-                ; Display current frequency (high bits)
+                ; Clear previous frequency
+                ldx #4    ; row
+                ldy #4    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda #$20  ; " "
+                jsr $ffd2
+                jsr $ffd2
+                jsr $ffd2
+                jsr $ffd2
+                jsr $ffd2
+                jsr $ffd2
+
+                ; Display current frequency
                 ldx #4    ; row
                 ldy #5    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
-                lda freqhi$
-                jsr outdecim
-
-                ; Display current frequency (low bits)
-                ldx #5    ; row
-                ldy #5    ; column
-                clc       ; clc = update position, sec = get position
-                jsr $fff0 ; "Position cursor" KERNAL function
-                lda freqlo$
-                jsr outdecim
+                jsr convertfreq$
+                ldx freqlodisp$
+                lda freqhidisp$
+                jsr NUMOUT
 
                 ; Display current "attack" value
-                ldx #7    ; row
-                ldy #5    ; column
+                ldx #6    ; row
+                ldy #6    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda attack$
                 jsr outdecim
 
                 ; Display current "decay" value
-                ldx #8    ; row
-                ldy #5    ; column
+                ldx #7    ; row
+                ldy #6    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda decay$
                 jsr outdecim
 
                 ; Display current "sustain" value
-                ldx #9    ; row
-                ldy #5    ; column
+                ldx #8    ; row
+                ldy #6    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda sustain$
                 jsr outdecim
 
                 ; Display current "release" value
-                ldx #10   ; row
-                ldy #5    ; column
+                ldx #9    ; row
+                ldy #6    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda release$
@@ -388,7 +378,7 @@ mainloop
                 ; Don't end program if RUN/STOP key not pressed
                 lda $91
                 cmp #$7f
-                bne nobreak
+                bne hkey
 
 break           ; Restore original interrupt routine
                 jsr uninstall$
@@ -399,79 +389,74 @@ break           ; Restore original interrupt routine
                 ; Done
                 rts
 
-nobreak         ; Update UI
-                jsr updateui
-
 hkey            ; If "H" is pressed
                 lda $cb
                 cmp #$1d ; "H"
                 bne gkey
+                jsr updateui
                 jmp increl
 
 gkey            ; If "G" is pressed
                 lda $cb
                 cmp #$1a ; "G"
                 bne ykey
+                jsr updateui
                 jmp decrel
 
 ykey            ; If "Y" is pressed
                 lda $cb
                 cmp #$19 ; "Y"
                 bne tkey
+                jsr updateui
                 jmp incdecay
 
                 ; If "T" is pressed
 tkey            lda $cb
                 cmp #$16 ; "T"
                 bne fkey
+                jsr updateui
                 jmp decdecay
 
                 ; If "F" is pressed
 fkey            lda $cb
                 cmp #$15 ; "F"
                 bne dkey
+                jsr updateui
                 jmp incsust
 
                 ; If "D" is pressed
 dkey            lda $cb
                 cmp #$12 ; "D"
                 bne wkey
+                jsr updateui
                 jmp decsust
 
                 ; If "W" is pressed
 wkey            lda $cb ;
                 cmp #$09 ; "W"
                 bne qkey
-                jmp incfreqh
+                jsr updateui
+                jmp incfreq
                 
                 ; If "Q" is pressed
 qkey            lda $cb
                 cmp #$3e ; "Q"
-                bne skey
-                jmp decfreqh
-
-                ; If "S" is pressed
-skey            lda $cb
-                cmp #$0d ; "S"
-                bne akey
-                jmp incfreql
-                
-                ; If "A" is pressed
-akey            lda $cb
-                cmp #$0a ; "A"
                 bne rkey
-                jmp decfreql
+                jsr updateui
+                jmp decfreq
 
                 ; If "R" is pressed
 rkey            lda $cb
                 cmp #$11 ; "R"
                 bne ekey
+                jsr updateui
                 jmp incatt
 
                 ; If "E" is pressed
 ekey            lda $cb
                 cmp #$0e ; "E"
                 bne bottom
+                jsr updateui
                 jmp decatt
 
 bottom          ; Bottom of main loop
@@ -481,91 +466,77 @@ bottom          ; Bottom of main loop
 ; Input handlers
 ; Increase release
 increl          inc release$
-                inc release$
-                inc release$
-                inc release$
-                inc release$
                 jsr debounce
                 jmp mainloop
 
 ; Decrease release
 decrel          dec release$
-                dec release$
-                dec release$
-                dec release$
-                dec release$
                 jsr debounce
                 jmp mainloop
 
 ; Increase decay
 incdecay        inc decay$
-                inc decay$
-                inc decay$
-                inc decay$
-                inc decay$
                 jsr debounce
                 jmp mainloop
 
 ; Decrease decay
 decdecay        dec decay$
-                dec decay$
-                dec decay$
-                dec decay$
-                dec decay$
                 jsr debounce
                 jmp mainloop
 
 ; Increase sustain
 incsust         inc sustain$
-                inc sustain$
-                inc sustain$
-                inc sustain$
-                inc sustain$
                 jsr debounce
                 jmp mainloop
 
 ; Decrease sustain
 decsust         dec sustain$
-                dec sustain$
-                dec sustain$
-                dec sustain$
-                dec sustain$
                 jsr debounce
                 jmp mainloop
 
 ; Increment frequency
 ; TODO: Convert to subroutine
-incfreqh        inc freqhi$
-                jsr debounce
-                jmp mainloop
-incfreql        inc freqlo$
+incfreq         lda freqlo$
+                sta num1lo$
+                lda freqhi$
+                sta num1hi$
+                lda #160
+                sta num2lo$
+                lda #0
+                sta num2hi$
+                jsr addnums$
+                lda resultlo$
+                sta freqlo$
+                lda resulthi$
+                sta freqhi$
                 jsr debounce
                 jmp mainloop
 
 ; Decrease frequency
 ; TODO: Convert to subroutine
-decfreqh        dec freqhi$
-                jsr debounce
-                jmp mainloop
-decfreql        dec freqlo$
+decfreq         lda freqlo$
+                sta num1lo$
+                lda freqhi$
+                sta num1hi$
+                lda #160
+                sta num2lo$
+                lda #0
+                sta num2hi$
+                jsr subnums$
+                lda resultlo$
+                sta freqlo$
+                lda resulthi$
+                sta freqhi$
                 jsr debounce
                 jmp mainloop
 
 ; Increase attack
 incatt          inc attack$
-                inc attack$
-                inc attack$
-                inc attack$
-                inc attack$
                 jsr debounce
                 jmp mainloop
 
 ; Decrease attack
 decatt          dec attack$
-                dec attack$
-                dec attack$
-                dec attack$
-                dec attack$
                 jsr debounce
                 jmp mainloop
 ; End of input handlers

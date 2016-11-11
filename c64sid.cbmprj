@@ -23,7 +23,9 @@
     </BuildEvents>
     <BuildList>
         <FileName>A UI.asm</FileName>
+        <FileName>Floating point.asm</FileName>
         <FileName>Interrupt routine.asm</FileName>
+        <FileName>Math.asm</FileName>
         <FileName>Shared memory.asm</FileName>
         <FileName>Uninstall.asm</FileName>
     </BuildList>
@@ -53,7 +55,29 @@
             <FileOpen>False</FileOpen>
         </SourceFile>
         <SourceFile>
+            <Name>Floating point.asm</Name>
+            <PrgName />
+            <FileType>2</FileType>
+            <IncludeInBuild>True</IncludeInBuild>
+            <Regions />
+            <Breakpoints />
+            <Bookmarks />
+            <Topmost>False</Topmost>
+            <FileOpen>True</FileOpen>
+        </SourceFile>
+        <SourceFile>
             <Name>Interrupt routine.asm</Name>
+            <PrgName />
+            <FileType>2</FileType>
+            <IncludeInBuild>True</IncludeInBuild>
+            <Regions />
+            <Breakpoints />
+            <Bookmarks />
+            <Topmost>False</Topmost>
+            <FileOpen>True</FileOpen>
+        </SourceFile>
+        <SourceFile>
+            <Name>Math.asm</Name>
             <PrgName />
             <FileType>2</FileType>
             <IncludeInBuild>True</IncludeInBuild>
