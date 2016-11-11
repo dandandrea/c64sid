@@ -40,8 +40,6 @@ install$         ; Initialize SID
                 rts
 ; New interrupt routine loaded
 
-trintirq        byte 12  ; Interval between clearing gate bit and then setting it
-trlenirq        byte 96  ; Interval between setting gate bit and then clearing it
 numint          byte $00
 
 ; Our interrupt routine
@@ -95,7 +93,7 @@ isn             ; Display output
                 sta $0400
 
                 ; Load interrupt counter
-                lda trlenirq
+                lda trlenirq$
                 sta numint
 
                 ; Done here
@@ -110,7 +108,7 @@ noton           ; Not in an interval
                 sta $0400
 
                 ; Load interrupt counter
-                lda trintirq
+                lda trintirq$
                 sta numint
 
                 ; Play SID
