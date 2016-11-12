@@ -104,7 +104,7 @@ noton           ; Not in an interval
                 ; Update indicator
                 lda #3    ; Cyan text
                 sta $0286
-                lda #$2a  ; "*"
+                lda #$e0  ; Block character (reverse space)
                 sta $0400
 
                 ; Load interrupt counter
@@ -143,9 +143,15 @@ playsid         ; Set frequency
                 asl
                 ora release$
                 sta $d406
-                
+
+                ; Set pulse width
+                lda #11
+                sta $d402 ; Lower bits
+                lda #255
+                sta $d403 ; Upper bits
+
                 ; Set waveform
-                lda #%00010000 ; Triangle wave
+                lda waveform$
                 sta $d404
 
                 ; Alternate gate bit

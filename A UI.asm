@@ -25,10 +25,9 @@ hightext        lda #3    ; cyan text
 
 ; Setup screen colors
 scrnblk         ; Set screen colors
-                lda #11    ; dark grey border
-                sta $d020
-                lda #0     ; black background
-                sta $d021
+                lda #0     
+                sta $d020 ; black border
+                sta $d021 ; black background
                 rts
 
 uirow1          text "trigger         trigger"
@@ -40,31 +39,37 @@ uirow2          text "  delay (k/l)     length (n/m)"
 uirow3          text ""
                 byte 0
 
-uirow4          text "oscltor 1 -/+   oscltor 2 -/+"
+uirow4          text "osc. 1      -/+   osc. 2      -/+"
                 byte 0
 
-uirow5          text "--------- ---   --------- ---"
+uirow5          text "----------- ---   ----------- ---"
                 byte 0
 
-uirow6          text "freq      q/w   freq       /"
+uirow6          text "freq        q/w   freq         /"
                 byte 0
 
 uirow7          text ""
                 byte 0
 
-uirow8          text "atck      e/r   atck       /"
+uirow8          text "attack      e/r   attack       /"
                 byte 0
 
-uirow9          text "dcay      t/y   dcay       /"
+uirow9          text "decay       t/y   decay        /"
                 byte 0
 
-uirow10         text "sust      d/f   sust       /"
+uirow10         text "sustain     d/f   sustain      /"
                 byte 0
 
-uirow11         text "rlse      g/h   rlse       /"
+uirow11         text "release     g/h   release      /"
                 byte 0
 
-uifooter        text "v0.0.5 100% c64 6502 assembly"
+uirow12         text ""
+                byte 0
+
+uirow13         text "wavform     z/x   wavform      -"
+                byte 0
+
+uifooter        text "v0.0.6 100% c64 6502 assembly"
                 byte 0
 
 ; Initialize UI subroutine
@@ -165,6 +170,22 @@ initui          ; Clear the screen
                 ldy #>uirow11
                 jsr $ab1e
 
+                ldx #11   ; row
+                ldy #0    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda #<uirow12
+                ldy #>uirow12
+                jsr $ab1e
+
+                ldx #12   ; row
+                ldy #0    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda #<uirow13
+                ldy #>uirow13
+                jsr $ab1e
+
                 ldx #24   ; row
                 ldy #0    ; column
                 clc       ; clc = update position, sec = get position
@@ -225,7 +246,7 @@ updateui        ; Data text
 
                 ; Clear previous frequency
                 ldx #5    ; row
-                ldy #6    ; column
+                ldy #8    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda #$20  ; " "
@@ -235,7 +256,7 @@ updateui        ; Data text
 
                 ; Display current frequency
                 ldx #5    ; row
-                ldy #5    ; column
+                ldy #7    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 jsr convertfreq$
@@ -245,7 +266,7 @@ updateui        ; Data text
 
                 ; Display current "attack" value
                 ldx #7    ; row
-                ldy #4    ; column
+                ldy #8    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda attack$
@@ -253,7 +274,7 @@ updateui        ; Data text
 
                 ; Display current "decay" value
                 ldx #8    ; row
-                ldy #4    ; column
+                ldy #8    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda decay$
@@ -261,7 +282,7 @@ updateui        ; Data text
 
                 ; Display current "sustain" value
                 ldx #9    ; row
-                ldy #4    ; column
+                ldy #8    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda sustain$
@@ -269,11 +290,40 @@ updateui        ; Data text
 
                 ; Display current "release" value
                 ldx #10   ; row
-                ldy #4    ; column
+                ldy #8    ; column
                 clc       ; clc = update position, sec = get position
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda release$
                 jsr outdecim
+
+                ; Display current "waveform" value
+                ldx #12   ; row
+                ldy #10   ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+
+                lda waveform$
+
+                cmp #16
+                bne not16ui
+                lda #$54 ; "T"
+                jsr $ffd2
+                rts
+
+not16ui         cmp #32
+                bne not32ui
+                lda #$53 ; "S"
+                jsr $ffd2
+                rts
+
+not32ui         cmp #64
+                bne not64ui
+                lda #$50 ; "P"
+                jsr $ffd2
+                rts
+
+not64ui         lda #$4e ; "N"
+                jsr $ffd2
 
                 ; End of subroutine
                 rts
@@ -402,8 +452,22 @@ rkey            lda $cb
                 ; If "E" is pressed
 ekey            lda $cb
                 cmp #$0e ; "E"
-                bne bottom
+                bne zkey
                 jsr decatt
+                jsr updateui
+
+zkey            ; If "Z" is pressed
+                lda $cb
+                cmp #$0c ; "Z"
+                bne xkey
+                jsr waveformleft
+                jsr updateui
+
+xkey            ; If "X" is pressed
+                lda $cb
+                cmp #$17 ; "X"
+                bne bottom
+                jsr waveformright
                 jsr updateui
 
 bottom          ; Bottom of main loop
@@ -504,6 +568,36 @@ dectlen         dec trlenirq$
 inctlen         inc trlenirq$
                 jsr debounce
                 rts
+
+; Waveform left
+waveformleft    jsr debounce
+
+                lda waveform$
+
+                ; First edge case: 1000 -> 0001
+                cmp #128
+                bne not128
+                lda #16
+                sta waveform$
+                rts
+
+not128          asl waveform$
+                rts
+
+; Waveform right
+waveformright   jsr debounce
+
+                lda waveform$
+
+                ; Second edge case: 0001 -> 1000
+                cmp #16
+                bne not16
+                lda #128
+                sta waveform$
+                rts
+
+not16           lsr waveform$
+                rts
 ; End of input handlers
 
 ; Busywait routine
@@ -531,7 +625,7 @@ endinlp         lda #$00
 endwait         rts
 ; End of busywait routine
 
-; Debounce key press busywait
+1; Debounce key press busywait
 debounce        lda dbols
                 sta outloops
                 lda dbils

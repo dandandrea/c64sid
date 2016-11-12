@@ -10,6 +10,9 @@ decay$          byte 5
 sustain$        byte 15
 release$        byte 5
 
+; Waveform
+waveform$       byte 16
+
 ; Trigger timings
 trintirq$       byte 20 ; Interval between clearing gate bit and then setting it
 trlenirq$       byte 10 ; Interval between setting gate bit and then clearing it
