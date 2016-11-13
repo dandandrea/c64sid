@@ -150,6 +150,35 @@ playsid         ; Set frequency
                 lda pulsewidth$ + 1
                 sta $d403 ; Upper bits
 
+                ; Set filter cutoff
+                lda filtercutoff$
+                sta $d415
+                lda filtercutoff$ + 1
+                sta $d416
+
+                ; Set filter resonance
+                lda filterres$
+                asl
+                asl
+                asl
+                asl
+                ora $d417
+                sta $d417
+
+                ; Set filter control
+                lda filterctrl$
+                ora $d417
+                sta $d417
+
+                ; Set filter mode
+                lda filtermode$
+                asl
+                asl
+                asl
+                asl
+                ora $d418
+                sta $d418
+
                 ; Set waveform
                 lda waveform$
                 sta $d404

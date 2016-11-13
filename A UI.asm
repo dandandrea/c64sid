@@ -57,25 +57,40 @@ uirow8          text "attack      e/r   attack       /"
 uirow9          text "decay       t/y   decay        /"
                 byte 0
 
-uirow10         text "sustain     d/f   sustain      /"
+uirow10         text "sustain     a/s   sustain      /"
                 byte 0
 
-uirow11         text "release     g/h   release      /"
+uirow11         text "release     d/f   release      /"
                 byte 0
 
 uirow12         text ""
                 byte 0
 
-uirow13         text "wavform     z/x   wavform      -"
+uirow13         text "wavform     z/x   wavform      /"
                 byte 0
 
 uirow14         text ""
                 byte 0
 
-uirow15         text "pwidth      c/v   pwidth       -"
+uirow15         text "pwidth      c/v   pwidth       /"
                 byte 0
 
-uifooter        text "v0.0.6 100% c64 6502 assembly"
+uirow16         text ""
+                byte 0
+
+uirow17         text "fcut        u/i"
+                byte 0
+
+uirow18         text "fctrl       o/p"
+                byte 0
+
+uirow19         text "fmode       h/j"
+                byte 0
+
+uirow20         text "fres        b/g"
+                byte 0
+
+uifooter        text "v0.0.7 100% c64 6502 assembly"
                 byte 0
 
 ; Initialize UI subroutine
@@ -216,6 +231,46 @@ initui          ; Clear the screen
                 ldy #>uirow15
                 jsr $ab1e
 
+                ldx #15   ; row
+                ldy #0    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda #<uirow16
+                ldy #>uirow16
+                jsr $ab1e
+
+                ldx #16   ; row
+                ldy #0    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda #<uirow17
+                ldy #>uirow17
+                jsr $ab1e
+
+                ldx #17   ; row
+                ldy #0    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda #<uirow18
+                ldy #>uirow18
+                jsr $ab1e
+
+                ldx #18   ; row
+                ldy #0    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda #<uirow19
+                ldy #>uirow19
+                jsr $ab1e
+
+                ldx #19   ; row
+                ldy #0    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda #<uirow20
+                ldy #>uirow20
+                jsr $ab1e
+
                 ldx #24   ; row
                 ldy #0    ; column
                 clc       ; clc = update position, sec = get position
@@ -336,6 +391,51 @@ updateui        ; Data text
                 lda #$25
                 jsr $ffd2
 
+                ; Clear previous "filter cutoff" value
+                ldx #16   ; row
+                ldy #6    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda #$20  ; " "
+                jsr $ffd2
+                jsr $ffd2
+                jsr $ffd2
+                jsr $ffd2
+                jsr $ffd2
+
+                ; Display current "filter cutoff" value
+                ldx #16   ; row
+                ldy #6    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                ldx filtercutoff$
+                lda filtercutoff$ + 1
+                jsr NUMOUT
+
+                ; Display current "filter control" value
+                ldx #17   ; row
+                ldy #8    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda filterctrl$
+                jsr outdecim
+
+                ; Display current "filter mode" value
+                ldx #18   ; row
+                ldy #8    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda filtermode$
+                jsr outdecim
+
+                ; Display current "filter resonance" value
+                ldx #19   ; row
+                ldy #8    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda filterres$
+                jsr outdecim
+
                 ; Display current "waveform" value
                 ldx #12   ; row
                 ldy #10   ; column
@@ -412,22 +512,22 @@ kkey            ; If "K" is pressed
 lkey            ; If "L" is pressed
                 lda $cb
                 cmp #$2a ; "L"
-                bne hkey
+                bne fkey
                 jsr inctlen
                 jsr updateui
                 jmp mainloop
 
-hkey            ; If "H" is pressed
+fkey            ; If "F" is pressed
                 lda $cb
-                cmp #$1d ; "H"
-                bne gkey
+                cmp #$15 ; "F"
+                bne dkey
                 jsr increl
                 jsr updateui
                 jmp mainloop
 
-gkey            ; If "G" is pressed
+dkey            ; If "D" is pressed
                 lda $cb
-                cmp #$1a ; "G"
+                cmp #$12 ; "D"
                 bne ykey
                 jsr decrel
                 jsr updateui
@@ -444,22 +544,22 @@ ykey            ; If "Y" is pressed
                 ; If "T" is pressed
 tkey            lda $cb
                 cmp #$16 ; "T"
-                bne fkey
+                bne skey
                 jsr decdecay
                 jsr updateui
                 jmp mainloop
 
-                ; If "F" is pressed
-fkey            lda $cb
-                cmp #$15 ; "F"
-                bne dkey
+                ; If "S" is pressed
+skey            lda $cb
+                cmp #$0d ; "S"
+                bne akey
                 jsr incsust
                 jsr updateui
                 jmp mainloop
 
-                ; If "D" is pressed
-dkey            lda $cb
-                cmp #$12 ; "D"
+                ; If "A" is pressed
+akey            lda $cb
+                cmp #$0a ; "A"
                 bne wkey
                 jsr decsust
                 jsr updateui
@@ -520,8 +620,64 @@ ckey            ; If "C" is pressed
 vkey            ; If "V" is pressed
                 lda $cb
                 cmp #$1f ; "V"
-                bne bottom
+                bne ukey
                 jsr incpw
+                jsr updateui
+
+ukey            ; If "U" is pressed
+                lda $cb
+                cmp #$1e ; "U"
+                bne ikey
+                jsr decfiltcoff
+                jsr updateui
+
+ikey            ; If "I" is pressed
+                lda $cb
+                cmp #$21 ; "I"
+                bne okey
+                jsr incfiltcoff
+                jsr updateui
+
+okey            ; If "O" is pressed
+                lda $cb
+                cmp #$26 ; "O"
+                bne pkey
+                jsr decfiltctrl
+                jsr updateui
+
+pkey            ; If "P" is pressed
+                lda $cb
+                cmp #$29 ; "P"
+                bne hkey
+                jsr incfiltctrl
+                jsr updateui
+
+hkey            ; If "H" is pressed
+                lda $cb
+                cmp #$1d ; "H"
+                bne jkey
+                jsr decfiltmode
+                jsr updateui
+
+jkey            ; If "J" is pressed
+                lda $cb
+                cmp #$22 ; "J"
+                bne gkey
+                jsr incfiltmode
+                jsr updateui
+
+gkey            ; If "G" is pressed
+                lda $cb
+                cmp #$1a ; "G"
+                bne bkey
+                jsr incfiltres
+                jsr updateui
+
+bkey            ; If "B" is pressed
+                lda $cb
+                cmp #$1c ; "B"
+                bne bottom
+                jsr decfiltres
                 jsr updateui
 
 bottom          ; Bottom of main loop
@@ -696,6 +852,81 @@ incpw           lda pulsewidth$
                 jsr debounce
 
                 rts
+
+; Decrease filter cutoff
+decfiltcoff     lda filtercutoff$
+                sta num1lo$
+                lda filtercutoff$ + 1
+                sta num1hi$
+
+                lda #255
+                sta num2lo$
+                lda #1
+                sta num2hi$
+
+                jsr subnums$ ; result = num1 - num2
+
+                lda resultlo$
+                sta filtercutoff$
+                lda resulthi$
+                sta filtercutoff$ + 1
+
+                jsr debounce
+
+                rts
+
+; Increase filter cutoff
+incfiltcoff     lda filtercutoff$
+                sta num1lo$
+                lda filtercutoff$ + 1
+                sta num1hi$
+
+                lda #255
+                sta num2lo$
+                lda #1
+                sta num2hi$
+
+                jsr addnums$
+
+                lda resultlo$
+                sta filtercutoff$
+                lda resulthi$
+                sta filtercutoff$ + 1
+
+                jsr debounce
+
+                rts
+
+; Increase filter control
+incfiltctrl     inc filterctrl$
+                jsr debounce
+                rts
+
+; Decrease filer control
+decfiltctrl     dec filterctrl$
+                jsr debounce
+                rts
+
+; Increase filter mode
+incfiltmode     inc filtermode$
+                jsr debounce
+                rts
+
+; Decrease filer mode
+decfiltmode     dec filtermode$
+                jsr debounce
+                rts
+
+; Increase filter resonance
+incfiltres      inc filterres$
+                jsr debounce
+                rts
+
+; Decrease filer resonance
+decfiltres      dec filterres$
+                jsr debounce
+                rts
+
 ; End of input handlers
 
 ; Busywait routine
