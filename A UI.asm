@@ -69,6 +69,12 @@ uirow12         text ""
 uirow13         text "wavform     z/x   wavform      -"
                 byte 0
 
+uirow14         text ""
+                byte 0
+
+uirow15         text "pwidth      c/v   pwidth       -"
+                byte 0
+
 uifooter        text "v0.0.6 100% c64 6502 assembly"
                 byte 0
 
@@ -186,6 +192,30 @@ initui          ; Clear the screen
                 ldy #>uirow13
                 jsr $ab1e
 
+                ldx #13   ; row
+                ldy #0    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda #<uirow14
+                ldy #>uirow14
+                jsr $ab1e
+
+                ldx #13   ; row
+                ldy #0    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda #<uirow14
+                ldy #>uirow14
+                jsr $ab1e
+
+                ldx #14   ; row
+                ldy #0    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                lda #<uirow15
+                ldy #>uirow15
+                jsr $ab1e
+
                 ldx #24   ; row
                 ldy #0    ; column
                 clc       ; clc = update position, sec = get position
@@ -295,6 +325,16 @@ updateui        ; Data text
                 jsr $fff0 ; "Position cursor" KERNAL function
                 lda release$
                 jsr outdecim
+
+                ; Display current "pulse width" value
+                ldx #14   ; row
+                ldy #7    ; column
+                clc       ; clc = update position, sec = get position
+                jsr $fff0 ; "Position cursor" KERNAL function
+                jsr convertpw$
+                jsr outdecim
+                lda #$25
+                jsr $ffd2
 
                 ; Display current "waveform" value
                 ldx #12   ; row
@@ -466,8 +506,22 @@ zkey            ; If "Z" is pressed
 xkey            ; If "X" is pressed
                 lda $cb
                 cmp #$17 ; "X"
-                bne bottom
+                bne ckey
                 jsr waveformright
+                jsr updateui
+
+ckey            ; If "C" is pressed
+                lda $cb
+                cmp #$14 ; "C"
+                bne vkey
+                jsr decpw
+                jsr updateui
+
+vkey            ; If "V" is pressed
+                lda $cb
+                cmp #$1f ; "V"
+                bne bottom
+                jsr incpw
                 jsr updateui
 
 bottom          ; Bottom of main loop
@@ -597,6 +651,50 @@ waveformright   jsr debounce
                 rts
 
 not16           lsr waveform$
+                rts
+
+; Decrease pulse width
+decpw           lda pulsewidth$
+                sta num1lo$
+                lda pulsewidth$ + 1
+                sta num1hi$
+
+                lda #82
+                sta num2lo$
+                lda #0
+                sta num2hi$
+
+                jsr subnums$ ; result = num1 - num2
+
+                lda resultlo$
+                sta pulsewidth$
+                lda resulthi$
+                sta pulsewidth$ + 1
+
+                jsr debounce
+
+                rts
+
+; Increase pulse width
+incpw           lda pulsewidth$
+                sta num1lo$
+                lda pulsewidth$ + 1
+                sta num1hi$
+
+                lda #82
+                sta num2lo$
+                lda #0
+                sta num2hi$
+
+                jsr addnums$
+
+                lda resultlo$
+                sta pulsewidth$
+                lda resulthi$
+                sta pulsewidth$ + 1
+
+                jsr debounce
+
                 rts
 ; End of input handlers
 

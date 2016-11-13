@@ -145,9 +145,9 @@ playsid         ; Set frequency
                 sta $d406
 
                 ; Set pulse width
-                lda #11
+                lda pulsewidth$
                 sta $d402 ; Lower bits
-                lda #255
+                lda pulsewidth$ + 1
                 sta $d403 ; Upper bits
 
                 ; Set waveform

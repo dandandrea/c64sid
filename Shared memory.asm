@@ -1,6 +1,6 @@
 ; Frequency
 freqlo$         byte $45
-freqhi$         byte $3d
+freqhi$         byte $1a
 freqlodisp$     byte 0
 freqhidisp$     byte 0
 
@@ -11,7 +11,10 @@ sustain$        byte 15
 release$        byte 5
 
 ; Waveform
-waveform$       byte 16
+waveform$       byte 64
+
+; Pulse width
+pulsewidth$     byte 255,11
 
 ; Trigger timings
 trintirq$       byte 20 ; Interval between clearing gate bit and then setting it
