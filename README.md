@@ -1,3 +1,3 @@
-# C64 SID (MOS 6581 IC) control software in Turbo Assembly 6502 assembler
+# Commodore 64 SID sound synthesis control software in 6502 Turbo Assembler
 
 [![YouTube video demo](https://img.youtube.com/vi/2O-NWhqpgJ4/0.jpg)](https://www.youtube.com/watch?v=2O-NWhqpgJ4)
